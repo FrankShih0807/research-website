@@ -1,5 +1,4 @@
 import { readFile } from 'node:fs/promises';
-import bibtexParse from 'bibtex-parse-js';
 
 function mapType(entryType) {
   const t = (entryType || '').toLowerCase();
@@ -9,11 +8,33 @@ function mapType(entryType) {
   return 'other';
 }
 
+function parseBibtexToEntries(text) {
+  const entries = [];
+  const re = /@([a-zA-Z]+)\s*\{\s*([^,]+),\s*([\s\S]*?)\}\s*(?=@|$)/g;
+  let m;
+  while ((m = re.exec(text))) {
+    const [, entryType, citationKey, body] = m;
+    const tags = {};
+    const fieldRe = /(\w+)\s*=\s*(\{[\s\S]*?\}|"[\s\S]*?"|[^,]+)\s*(?:,|$)/g;
+    let f;
+    while ((f = fieldRe.exec(body))) {
+      const key = f[1].toLowerCase();
+      let val = f[2].trim();
+      if ((val.startsWith('{') && val.endsWith('}')) || (val.startsWith('"') && val.endsWith('"'))) {
+        val = val.slice(1, -1);
+      }
+      tags[key] = val.replace(/\s+/g, ' ').trim();
+    }
+    entries.push({ citationKey, entryType, entryTags: tags });
+  }
+  return entries;
+}
+
 export async function loadPublications(bibUrl) {
   try {
     const fileUrl = bibUrl instanceof URL ? bibUrl : new URL(bibUrl, import.meta.url);
     const raw = await readFile(fileUrl, 'utf8');
-    const entries = bibtexParse.toJSON(raw);
+    const entries = parseBibtexToEntries(raw);
     const pubs = entries.map(({ citationKey, entryType, entryTags }) => {
       const authors = (entryTags?.author || '')
         .split(/\s+and\s+/i)
