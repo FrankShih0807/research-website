@@ -1,0 +1,33 @@
+import "../styles/global.css";
+const { title = 'Home' } = Astro.props;
+const links = [
+  { href: '/', label: 'Home' },
+  { href: '/about', label: 'About' },
+  { href: '/research', label: 'Research' },
+  { href: '/publications', label: 'Publications' },
+  { href: '/talks', label: 'Talks' },
+  { href: '/software', label: 'Software' },
+  { href: '/cv', label: 'CV' },
+  { href: '/contact', label: 'Contact' },
+];
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} · Research</title>
+  </head>
+  <body>
+    <div class="container">
+      <nav class="nav">
+        <div class="brand">Research</div>
+        {links.map((l) => (
+          <a href={l.href} class={Astro.url.pathname === l.href ? 'active' : ''}>{l.label}</a>
+        ))}
+      </nav>
+      <slot />
+      <footer>© {new Date().getFullYear()} · Built with Astro</footer>
+    </div>
+  </body>
+  </html>
+

@@ -1,0 +1,68 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { loadPublications } from '../lib/bibtex.js';
+
+const bibUrl = new URL('../../content/publications/sample.bib', import.meta.url);
+const publications = await loadPublications(bibUrl);
+const types = ['journal', 'conference', 'preprint', 'other'];
+const years = Array.from(new Set(publications.map((p) => p.year).filter(Boolean))).sort((a, b) => b - a);
+---
+<BaseLayout title="Publications">
+  <h1>Publications</h1>
+  {publications.length === 0 ? (
+    <p class="muted">No entries found. Replace <code>content/publications/sample.bib</code> with your BibTeX to populate.</p>
+  ) : (
+    <>
+      <div class="card" style="margin:16px 0;">
+        <input id="pub-search" type="search" placeholder="Search title/authors/venue" style="width:100%;padding:10px;border-radius:8px;border:1px solid #23262d;background:var(--card);color:var(--fg);" />
+        <div style="margin-top:10px;display:flex;gap:12px;flex-wrap:wrap;">
+          {types.map((t) => (
+            <label><input type="checkbox" name="type" value={t} checked /> {t}</label>
+          ))}
+        </div>
+      </div>
+      {years.map((y) => (
+        <>
+          <h2>{y}</h2>
+          <ul style="list-style:none;padding:0;margin:0 0 24px 0;">
+            {publications.filter((p) => p.year === y).map((p) => (
+              <li class="pub" data-type={p.type} data-search={`${p.title} ${p.authors.join(' ')} ${p.venue}`.toLowerCase()} style="margin:10px 0;padding:12px;border:1px solid #23262d;border-radius:12px;background:var(--card);">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <div><strong>{p.title}</strong></div>
+                  <div class="muted">{p.authors.join(', ')}</div>
+                  <div class="muted">{p.venue} · {p.year} · {p.type}</div>
+                  <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                    {p.pdf && <a href={p.pdf} target="_blank" rel="noopener">PDF</a>}
+                    {p.url && <a href={p.url} target="_blank" rel="noopener">Link</a>}
+                    {p.doi && <a href={`https://doi.org/${p.doi}`} target="_blank" rel="noopener">DOI</a>}
+                    {p.arxiv && <a href={`https://arxiv.org/abs/${p.arxiv}`} target="_blank" rel="noopener">arXiv</a>}
+                    {p.code && <a href={p.code} target="_blank" rel="noopener">Code</a>}
+                    {p.data && <a href={p.data} target="_blank" rel="noopener">Data</a>}
+                    {p.slides && <a href={p.slides} target="_blank" rel="noopener">Slides</a>}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      ))}
+      <script>
+        const search = document.getElementById('pub-search');
+        const checkboxes = Array.from(document.querySelectorAll('input[name="type"]'));
+        const pubs = Array.from(document.querySelectorAll('.pub'));
+        function applyFilters() {
+          const query = (search.value || '').toLowerCase();
+          const allowed = new Set(checkboxes.filter((c) => c.checked).map((c) => c.value));
+          for (const li of pubs) {
+            const matchesType = allowed.has(li.dataset.type);
+            const matchesQuery = li.dataset.search.includes(query);
+            li.style.display = matchesType && matchesQuery ? '' : 'none';
+          }
+        }
+        search.addEventListener('input', applyFilters);
+        checkboxes.forEach((cb) => cb.addEventListener('change', applyFilters));
+      </script>
+    </>
+  )}
+</BaseLayout>
+

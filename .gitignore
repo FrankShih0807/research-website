@@ -1,0 +1,15 @@
+# Node / Astro
+node_modules/
+.DS_Store
+dist/
+.astro/
+.vercel/
+.cache/
+
+# Env
+.env
+.env.*
+
+# Editor
+.vscode/
+.idea/
