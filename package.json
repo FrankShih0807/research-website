@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "astro": "^4.10.0",
-    "bibtex-parse-js": "^2.0.0"
+    "bibtex-parse-js": "^0.0.26"
   }
 }
 
